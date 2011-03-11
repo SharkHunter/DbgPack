@@ -23,6 +23,7 @@ The DbgPacker packs the PMS.conf,WEB.conf and the PMS log file (debug.log) plus 
 files into teh debug packer add the following code snippet:
 
 ```
+
 String f=(String)PMS.getConfiguration().getCustomProperty("dbgpack");
 if(f==null)
 	f=myFile;
@@ -30,6 +31,7 @@ else
 	f=myFile+","+f;
 PMS.getConfiguration().setCustomProperty("dbgpack",f);
 PMS.getConfiguration().save();
+
 ```
 
 This adds myFile to the list of files that will be packed. Do this when the plugin starts up since the information is not read until the dump is ordered. 
