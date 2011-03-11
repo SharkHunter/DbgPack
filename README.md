@@ -23,6 +23,7 @@ The DbgPacker packs the PMS.conf,WEB.conf and the PMS log file (debug.log) plus 
 files into teh debug packer add the following code snippet:
 
 ```java
+
 String f=(String)PMS.getConfiguration().getCustomProperty("dbgpack");
 if(f==null)
 	f=myFile;
