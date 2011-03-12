@@ -45,8 +45,8 @@ public class DbgPack_plugin implements ExternalListener,ActionListener, ItemList
 	public JComponent config() {
 		JPanel top=new JPanel(new GridBagLayout());
 		JButton debugPack=new JButton("Pack debug info");
-		pmsbox=new JCheckBox("Include PMS.conf",true);
-		webbox=new JCheckBox("Include WEB.conf",true);
+		pmsbox=new JCheckBox("Include PMS.conf",pms);
+		webbox=new JCheckBox("Include WEB.conf",web);
 		debugPack.setActionCommand("action");
 		debugPack.addActionListener(this);
 		pmsbox.addItemListener(this);
@@ -69,8 +69,10 @@ public class DbgPack_plugin implements ExternalListener,ActionListener, ItemList
 	private void writeToZip(ZipOutputStream out,File f) throws Exception {
 		byte[] buf = new byte[1024];
 		int len;
-		if(!f.exists())
+		if(!f.exists()) {
+			PMS.debug("DbgPack file "+f.getAbsolutePath()+" does not exists, Ignore.");
 			return;
+		}
 		FileInputStream in = new FileInputStream(f);
 		out.putNextEntry(new ZipEntry(f.getName()));
 		while ((len = in.read(buf)) > 0) 
@@ -92,9 +94,6 @@ public class DbgPack_plugin implements ExternalListener,ActionListener, ItemList
 		String fName="pms_dbg.zip";
 		try {
 			ZipOutputStream zos=new ZipOutputStream(new FileOutputStream(fName));
-			// First PMS log
-			File pms_file=new File("debug.log");
-			writeToZip(zos,pms_file);
 			// PMS.conf
 			if(pms) {
 				File f=new File(PMS.getConfiguration().getPmsConfPath());
@@ -112,6 +111,9 @@ public class DbgPack_plugin implements ExternalListener,ActionListener, ItemList
 					writeToZip(zos,f);
 				}
 			}
+			// Last PMS log
+			File pms_file=new File("debug.log");
+			writeToZip(zos,pms_file);
 			zos.close();
 
 		} catch (Exception e) {
