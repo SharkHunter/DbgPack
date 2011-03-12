@@ -4,15 +4,16 @@
               To include a user specific buildfile here, simply create one in the same
               directory with the processing instruction <?eclipse.ant.import?>
               as the first entry and export the buildfile again. -->
-<project basedir="." default="build" name="DbgPack">
+<project basedir="." default="all" name="DbgPack">
     <property environment="env"/>
     <property name="ECLIPSE_HOME" value="C:/Users/Hasse/Downloads/eclipse-jee-galileo-SR2-win32/eclipse"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
+    <property name="build.dir" location="bin" />
     <path id="DbgPack.classpath">
         <pathelement location="bin"/>
-        <pathelement location="C:/Program Files (x86)/PS3 Media Server/pms.jar"/>
+        <pathelement location="lib/pms.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
@@ -30,10 +31,18 @@
     <target name="build-subprojects"/>
     <target depends="init" name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}" includeantruntime="false">
             <src path="src"/>
             <classpath refid="DbgPack.classpath"/>
         </javac>
+    </target>
+    <target name="jar" depends="build">
+        <jar destfile="${basedir}/dbgpack.jar" basedir="${build.dir}">
+            <fileset file="${basedir}/plugin"/>
+            <manifest>
+                <attribute name="Main-Class" value="test.Main" />
+            </manifest>
+        </jar>
     </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
     <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
@@ -49,4 +58,5 @@
         <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
         <antcall target="build"/>
     </target>
+    <target name="all" depends="jar"/>
 </project>
