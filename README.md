@@ -5,7 +5,7 @@ debug information.
 
 # Installation <a name="Install"></a>
 
-* download the [jar file](https://github.com/downloads/SharkHunter/DbgPack/dbgpack_014.jar) and place it in the PMS `plugins` directory
+* download the [jar file](https://github.com/downloads/SharkHunter/DbgPack/dbgpack_015.jar) and place it in the PMS `plugins` directory
 * restart PMS
 
 ## Uninstalling <a name="Uninstall"></a>

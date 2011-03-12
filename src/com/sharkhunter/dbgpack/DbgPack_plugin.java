@@ -70,7 +70,7 @@ public class DbgPack_plugin implements ExternalListener,ActionListener, ItemList
 		byte[] buf = new byte[1024];
 		int len;
 		if(!f.exists()) {
-			PMS.debug("DbgPack file "+f.getAbsolutePath()+" does not exists, Ignore.");
+			PMS.debug("DbgPack file "+f.getAbsolutePath()+" does not exist - ignoring");
 			return;
 		}
 		FileInputStream in = new FileInputStream(f);
