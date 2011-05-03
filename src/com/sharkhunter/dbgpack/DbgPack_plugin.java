@@ -96,12 +96,12 @@ public class DbgPack_plugin implements ExternalListener,ActionListener, ItemList
 			ZipOutputStream zos=new ZipOutputStream(new FileOutputStream(fName));
 			// PMS.conf
 			if(pms) {
-				File f=new File(PMS.getConfiguration().getPmsConfPath());
+				File f=new File(PMS.getConfiguration().getProfilePath());
 				//File f=new File(conf("PMS"));
 				writeToZip(zos,f);
 			}
 			if(web) {
-				File f=new File(conf("WEB"));
+				File f=new File(PMS.getConfiguration().getProfileDir()+File.separator+"WEB.conf");
 				writeToZip(zos,f);
 			}
 			// Now the rest
