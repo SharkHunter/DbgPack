@@ -101,7 +101,7 @@ public class DbgPack_plugin implements ExternalListener,ActionListener, ItemList
 				writeToZip(zos,f);
 			}
 			if(web) {
-				File f=new File(PMS.getConfiguration().getProfileDir()+File.separator+"WEB.conf");
+				File f=new File(PMS.getConfiguration().getProfileDirectory()+File.separator+"WEB.conf");
 				writeToZip(zos,f);
 			}
 			// Now the rest
