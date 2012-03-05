@@ -1,14 +1,22 @@
 package com.sharkhunter.dbgpack;
 
+import java.awt.Window;
+import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.Insets;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -16,57 +24,131 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-
-import com.sun.jna.Platform;
+import javax.swing.JOptionPane;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.plaf.metal.MetalIconFactory;
 
 import net.pms.PMS;
 import net.pms.external.ExternalListener;
+import net.pms.external.ExternalFactory;
+import net.pms.configuration.PmsConfiguration;
+import net.pms.logging.LoggingConfigFileLoader;
 
-public class DbgPack_plugin implements ExternalListener,ActionListener, ItemListener {
+public class DbgPack_plugin implements ExternalListener, ActionListener, ItemListener {
 	
-	private boolean pms;
-	private boolean web;
-	
-	private JCheckBox pmsbox;
-	private JCheckBox webbox;
+	private boolean init;
+	private LinkedHashMap<File, JCheckBox> items;
+	private String debug_log, dbg_zip;
 	
 	public DbgPack_plugin() {
-		pms=true;
-		web=true;
+		init = true;
+		items = new LinkedHashMap<File, JCheckBox>();
 	}
 
 	public void shutdown() {
 	}
 
 	public String name() {
-		return "Pack Debug Info";
+		return "View and Zip Logs";
 	}
+	
 	//@Override
 	public JComponent config() {
-		JPanel top=new JPanel(new GridBagLayout());
-		JButton debugPack=new JButton("Pack debug info");
-		pmsbox=new JCheckBox("Include PMS.conf",pms);
-		webbox=new JCheckBox("Include WEB.conf",web);
-		debugPack.setActionCommand("action");
-		debugPack.addActionListener(this);
-		pmsbox.addItemListener(this);
-		webbox.addItemListener(this);
+		if (init) {
+			poll();
+			init = false;
+		}
+		JPanel top = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
-		// 1st the channels path
 		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(0, 5, 0, 5);
+		c.ipadx = 5;
 		c.gridx = 0;
 		c.gridy = 0;
-		c.weightx=1.0;
-		top.add(pmsbox,c);
-		c.gridy++;
-		c.weightx=1.0;
-		top.add(webbox,c);
-		c.gridy++;
-		c.weightx=2.0;
-		top.add(debugPack,c);
+		for (Map.Entry<File, JCheckBox> item : items.entrySet()) {
+			File file = item.getKey();
+			boolean exists = file.exists();
+			JCheckBox box = item.getValue();
+			if (box == null) {
+				box = new JCheckBox(file.getName(), exists);
+				item.setValue(box);
+			}
+         if (!exists) {
+         	box.setSelected(false);
+				box.setEnabled(false);
+         }
+			c.weightx = 1.0;
+			top.add(box, c);
+			JButton open = exists ? 
+				new JButton(MetalIconFactory.getTreeLeafIcon()) : new JButton("+");
+			open.setActionCommand(file.getAbsolutePath());
+			open.setToolTipText((exists ? "" : "Create ") + file.getAbsolutePath());
+			open.addActionListener(this);
+			c.gridx++;
+			c.weightx = 0.0;
+			top.add(open, c);
+			c.gridx--;
+			c.gridy++;
+		}
+		c.weightx = 2.0;
+		JButton debugPack = new JButton("Zip selected files");
+		debugPack.setActionCommand("pack");
+		debugPack.addActionListener(this);
+		top.add(debugPack, c);
+		JButton open = new JButton(MetalIconFactory.getTreeFolderIcon());
+		open.setActionCommand(new File(dbg_zip).getParentFile().getAbsolutePath());
+		open.setToolTipText("Open zip location");
+		open.addActionListener(this);
+		c.gridx++;
+		c.weightx = 0.0;
+		top.add(open, c);
 		return top;
 	}
-	private void writeToZip(ZipOutputStream out,File f) throws Exception {
+	
+	private void poll() {
+		// call the client callbacks
+		for(ExternalListener listener:ExternalFactory.getExternalListeners()) {
+			if(listener instanceof dbgpack) {
+				PMS.debug("found client " + listener.name());
+				Object obj = ((dbgpack)listener).dbgpack_cb();
+				if(obj instanceof String) {
+					add(((String)obj).split(","));
+				} else if(obj instanceof String[]) {
+					add((String[])obj);
+				}
+			}
+		}
+		PmsConfiguration configuration = PMS.getConfiguration();
+		// check dbgpack property in PMS.conf
+		PMS.debug("checking dbgpack property in PMS.conf");
+		String f = (String)configuration.getCustomProperty("dbgpack");
+		if(f != null) {
+			add(f.split(","));
+		}
+		// add core items with debug.log last (LinkedHashMap preserves insertion order)
+		String profileDirectory = configuration.getProfileDirectory();
+		debug_log = LoggingConfigFileLoader.getLogFilePaths().get("debug.log");
+		dbg_zip =debug_log.replace("debug.log", "pms_dbg.zip");
+		add(new File(debug_log.replace("debug.log", "pmsencoder.log")));
+		add(new File(profileDirectory, "WEB.conf"));
+		add(new File(configuration.getProfilePath()));
+		add(new File(debug_log));
+	}
+	
+	private void add(String[] files) {
+		for(String file:files) {
+			PMS.debug("adding " + file);
+			items.put(new File(file), null);
+		}
+	}
+	
+	private void add(File file) {
+		PMS.debug("adding " + file.getAbsolutePath());
+		items.put(file, null);
+	}
+	
+	private void writeToZip(ZipOutputStream out, File f) throws Exception {
 		byte[] buf = new byte[1024];
 		int len;
 		if(!f.exists()) {
@@ -80,67 +162,57 @@ public class DbgPack_plugin implements ExternalListener,ActionListener, ItemList
 		out.closeEntry();
 		in.close();
 	}
-	private static final String PMSDIR = "\\PMS\\";
-	private String conf(String file) {
-		String strAppData = System.getenv("APPDATA");
-		if (Platform.isWindows() && strAppData != null) {
-                return strAppData + PMSDIR + file+ ".conf";
-        } 
-        else {
-        	return file+".conf";
-        }
-	}
-	private void packDbg(String[] files) {
-		String fName="pms_dbg.zip";
+	
+	private void packDbg() {
 		try {
-			ZipOutputStream zos=new ZipOutputStream(new FileOutputStream(fName));
-			// PMS.conf
-			if(pms) {
-				File f=new File(PMS.getConfiguration().getProfilePath());
-				//File f=new File(conf("PMS"));
-				writeToZip(zos,f);
-			}
-			if(web) {
-				File f=new File(PMS.getConfiguration().getProfileDirectory()+File.separator+"WEB.conf");
-				writeToZip(zos,f);
-			}
-			// Now the rest
-			if(files!=null) {
-				for(int i=0;i<files.length;i++) {
-					File f=new File(files[i]);
-					writeToZip(zos,f);
+			ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(dbg_zip));
+			for (Map.Entry<File, JCheckBox> item : items.entrySet()) {
+				if (item.getValue().isSelected()) {
+					File file = item.getKey();
+					PMS.debug("packing " + file.getAbsolutePath());
+						writeToZip(zos, file);
 				}
-			}
-			// Last PMS log
-			File pms_file=new File("debug.log");
-			writeToZip(zos,pms_file);
+			} 
 			zos.close();
-
+			JOptionPane.showMessageDialog(null, "zipped to '" + dbg_zip + "'.", "Done", JOptionPane.INFORMATION_MESSAGE); 
 		} catch (Exception e) {
-			PMS.debug("error packing dbg info "+e);
+			PMS.debug("error packing zip file "+e);
 		}
 	}
 
 	@Override
 	public void itemStateChanged(ItemEvent e) {
-		Object source = e.getItemSelectable();
-		boolean val=true;
-		if(e.getStateChange() == ItemEvent.DESELECTED)
-			val=false;
-		if(source==pmsbox)
-			pms=val;
-		if(source==webbox)
-			web=val;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		String f=(String)PMS.getConfiguration().getCustomProperty("dbgpack");
-		if(f==null)
-			packDbg(null);
-		else {
-			String files[]=f.split(",");
-			packDbg(files);
+		String str = e.getActionCommand();
+		if (str.equals("pack")) {
+			packDbg();
+		} else {
+			// open
+			try {
+				File file = new File(str);
+				boolean exists = file.exists();
+				if (!exists) {
+					file.createNewFile();
+				}
+				java.awt.Desktop.getDesktop().open(new File(str));
+				if (!exists) {
+					reload((JComponent)e.getSource());
+				}
+			} catch (IOException e1) {
+				PMS.debug(String.format("Failed to open file %s in default editor %s", str, e1));
+			}
 		}
+	}
+	
+	private void reload(JComponent c) {
+   	// self-destruct and restart
+		PMS.debug("reloading.");
+   	init = true;
+   	((Window)c.getTopLevelAncestor()).dispose();
+		JOptionPane.showOptionDialog((JFrame) (SwingUtilities.getWindowAncestor((Component) PMS.get().getFrame())), 
+			config(), "Options", JOptionPane.CLOSED_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
 	}
 }
