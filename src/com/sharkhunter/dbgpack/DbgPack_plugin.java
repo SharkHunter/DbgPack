@@ -26,6 +26,8 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 import javax.swing.JFrame;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.metal.MetalIconFactory;
 
@@ -44,6 +46,8 @@ public class DbgPack_plugin implements ExternalListener, ActionListener, ItemLis
 	public DbgPack_plugin() {
 		init = true;
 		items = new LinkedHashMap<File, JCheckBox>();
+		debug_log = LoggingConfigFileLoader.getLogFilePaths().get("debug.log");
+		dbg_zip = debug_log.replace("debug.log", "pms_dbg.zip");
 	}
 
 	public void shutdown() {
@@ -97,7 +101,7 @@ public class DbgPack_plugin implements ExternalListener, ActionListener, ItemLis
 		debugPack.addActionListener(this);
 		top.add(debugPack, c);
 		JButton open = new JButton(MetalIconFactory.getTreeFolderIcon());
-		open.setActionCommand(new File(dbg_zip).getParentFile().getAbsolutePath());
+		open.setActionCommand("showzip");
 		open.setToolTipText("Open zip location");
 		open.addActionListener(this);
 		c.gridx++;
@@ -128,8 +132,6 @@ public class DbgPack_plugin implements ExternalListener, ActionListener, ItemLis
 		}
 		// add core items with debug.log last (LinkedHashMap preserves insertion order)
 		String profileDirectory = configuration.getProfileDirectory();
-		debug_log = LoggingConfigFileLoader.getLogFilePaths().get("debug.log");
-		dbg_zip =debug_log.replace("debug.log", "pms_dbg.zip");
 		add(new File(debug_log.replace("debug.log", "pmsencoder.log")));
 		add(new File(profileDirectory, "WEB.conf"));
 		add(new File(configuration.getProfilePath()));
@@ -163,7 +165,37 @@ public class DbgPack_plugin implements ExternalListener, ActionListener, ItemLis
 		in.close();
 	}
 	
+	private boolean saveDialog() {
+		JFileChooser fc = new JFileChooser() {
+			public void approveSelection() {
+				if (!getSelectedFile().isDirectory()) {
+					super.approveSelection();
+				}
+			}
+		};
+		fc.setFileFilter(
+			new FileFilter () { 
+				public boolean accept(File f) {
+					String s = f.getName();
+					return f.isDirectory() || (s.endsWith(".zip") || s.endsWith(".ZIP"));
+				}
+				public String getDescription() {
+					return "*.zip";
+				}
+			}
+		);
+		fc.setSelectedFile( new File(dbg_zip));
+		if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+			dbg_zip = fc.getSelectedFile().getPath();
+			return true;
+		}
+		return false;
+	}
+
 	private void packDbg() {
+		if (! saveDialog()) {
+			return;
+		}
 		try {
 			ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(dbg_zip));
 			for (Map.Entry<File, JCheckBox> item : items.entrySet()) {
@@ -192,23 +224,23 @@ public class DbgPack_plugin implements ExternalListener, ActionListener, ItemLis
 		} else {
 			// open
 			try {
-				File file = new File(str);
-				boolean exists = file.exists();
+				File file = str.equals("showzip") ? new File(dbg_zip).getParentFile() : new File(str);
+				boolean exists = file.isFile() && file.exists();
 				if (!exists) {
 					file.createNewFile();
 				}
-				java.awt.Desktop.getDesktop().open(new File(str));
+				java.awt.Desktop.getDesktop().open(file);
 				if (!exists) {
 					reload((JComponent)e.getSource());
 				}
 			} catch (IOException e1) {
-				PMS.debug(String.format("Failed to open file %s in default editor %s", str, e1));
+				PMS.debug(String.format("Failed to open '%s' in default desktop application %s", str, e1));
 			}
 		}
 	}
 	
 	private void reload(JComponent c) {
-   	// self-destruct and restart
+   	// rebuild and restart
 		PMS.debug("reloading.");
    	init = true;
    	((Window)c.getTopLevelAncestor()).dispose();
