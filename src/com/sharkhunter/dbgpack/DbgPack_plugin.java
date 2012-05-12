@@ -6,8 +6,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+//import java.awt.event.ItemEvent;
+//import java.awt.event.ItemListener;
 import java.awt.Insets;
 
 import java.io.File;
@@ -37,7 +37,7 @@ import net.pms.external.ExternalFactory;
 import net.pms.configuration.PmsConfiguration;
 import net.pms.logging.LoggingConfigFileLoader;
 
-public class DbgPack_plugin implements ExternalListener, ActionListener, ItemListener {
+public class DbgPack_plugin implements ExternalListener, ActionListener /*, ItemListener*/ {
 	
 	private boolean init;
 	private LinkedHashMap<File, JCheckBox> items;
@@ -212,9 +212,9 @@ public class DbgPack_plugin implements ExternalListener, ActionListener, ItemLis
 		}
 	}
 
-	@Override
-	public void itemStateChanged(ItemEvent e) {
-	}
+//	@Override
+//	public void itemStateChanged(ItemEvent e) {
+//	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
