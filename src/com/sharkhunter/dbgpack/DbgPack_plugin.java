@@ -168,7 +168,11 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 	private boolean saveDialog() {
 		JFileChooser fc = new JFileChooser() {
 			public void approveSelection() {
-				if (!getSelectedFile().isDirectory()) {
+				File f = getSelectedFile();
+				if (!f.isDirectory()) {
+					if (f.exists() && JOptionPane.showConfirmDialog(null, "Overwrite existing file?", "Confirm", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+						return;
+					}
 					super.approveSelection();
 				}
 			}
@@ -184,7 +188,7 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 				}
 			}
 		);
-		fc.setSelectedFile( new File(dbg_zip));
+		fc.setSelectedFile(new File(dbg_zip));
 		if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
 			dbg_zip = fc.getSelectedFile().getPath();
 			return true;
@@ -204,9 +208,8 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 					PMS.debug("packing " + file.getAbsolutePath());
 						writeToZip(zos, file);
 				}
-			} 
+			}
 			zos.close();
-			JOptionPane.showMessageDialog(null, "zipped to '" + dbg_zip + "'.", "Done", JOptionPane.INFORMATION_MESSAGE); 
 		} catch (Exception e) {
 			PMS.debug("error packing zip file "+e);
 		}
