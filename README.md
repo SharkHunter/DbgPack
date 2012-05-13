@@ -21,7 +21,7 @@ You can also view or create any of the registered files by pressing the buttons 
 ## Adding Files ##
 Files can be added manually to DbgPack by setting `dbgpack` to a comma-separated list of files in PMS.conf:
 
-	dbgpack = c:\\\\path\\\\to\\\\mylog,c:\\\\path\\\\to\\\\myconf
+	dbgpack = c:\\path\\to\\mylog,c:\\path\\to\\myconf
 
 ## Developers ##
 The DbgPacker packs the PMS.conf, WEB.conf and the PMS log file (debug.log) plus any files that plugins say should be included. To include new files into the debug packer add 'dbgpack.java' to your project and implement the `dbgpack` interface in your main plugin class:
