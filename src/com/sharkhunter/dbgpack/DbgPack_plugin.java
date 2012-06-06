@@ -141,13 +141,17 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 	private void add(String[] files) {
 		for(String file:files) {
 			PMS.debug("adding " + file);
-			items.put(new File(file), null);
+			try {
+				items.put(new File(file).getCanonicalFile(), null);
+			} catch (IOException e) {}
 		}
 	}
 	
 	private void add(File file) {
 		PMS.debug("adding " + file.getAbsolutePath());
-		items.put(file, null);
+		try {
+			items.put(file.getCanonicalFile(), null);
+		} catch (IOException e) {}
 	}
 	
 	private void writeToZip(ZipOutputStream out, File f) throws Exception {
