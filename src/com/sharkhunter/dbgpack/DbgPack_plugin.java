@@ -38,11 +38,11 @@ import net.pms.configuration.PmsConfiguration;
 import net.pms.logging.LoggingConfigFileLoader;
 
 public class DbgPack_plugin implements ExternalListener, ActionListener /*, ItemListener*/ {
-	
+
 	private boolean init;
 	private LinkedHashMap<File, JCheckBox> items;
 	private String debug_log, dbg_zip;
-	
+
 	public DbgPack_plugin() {
 		init = true;
 		items = new LinkedHashMap<File, JCheckBox>();
@@ -56,7 +56,7 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 	public String name() {
 		return "View and Zip Logs";
 	}
-	
+
 	//@Override
 	public JComponent config() {
 		if (init) {
@@ -78,13 +78,13 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 				box = new JCheckBox(file.getName(), exists);
 				item.setValue(box);
 			}
-         if (!exists) {
-         	box.setSelected(false);
+			if (!exists) {
+				box.setSelected(false);
 				box.setEnabled(false);
-         }
+			}
 			c.weightx = 1.0;
 			top.add(box, c);
-			JButton open = exists ? 
+			JButton open = exists ?
 				new JButton(MetalIconFactory.getTreeLeafIcon()) : new JButton("+");
 			open.setActionCommand(file.getAbsolutePath());
 			open.setToolTipText((exists ? "" : "Create ") + file.getAbsolutePath());
@@ -109,7 +109,7 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 		top.add(open, c);
 		return top;
 	}
-	
+
 	private void poll() {
 		// call the client callbacks
 		for(ExternalListener listener:ExternalFactory.getExternalListeners()) {
@@ -137,7 +137,7 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 		add(new File(configuration.getProfilePath()));
 		add(new File(debug_log));
 	}
-	
+
 	private void add(String[] files) {
 		for(String file:files) {
 			PMS.debug("adding " + file);
@@ -146,14 +146,14 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 			} catch (IOException e) {}
 		}
 	}
-	
+
 	private void add(File file) {
 		PMS.debug("adding " + file.getAbsolutePath());
 		try {
 			items.put(file.getCanonicalFile(), null);
 		} catch (IOException e) {}
 	}
-	
+
 	private void writeToZip(ZipOutputStream out, File f) throws Exception {
 		byte[] buf = new byte[1024];
 		int len;
@@ -163,12 +163,12 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 		}
 		FileInputStream in = new FileInputStream(f);
 		out.putNextEntry(new ZipEntry(f.getName()));
-		while ((len = in.read(buf)) > 0) 
+		while ((len = in.read(buf)) > 0)
 			out.write(buf, 0, len);
 		out.closeEntry();
 		in.close();
 	}
-	
+
 	private boolean saveDialog() {
 		JFileChooser fc = new JFileChooser() {
 			public void approveSelection() {
@@ -182,7 +182,7 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 			}
 		};
 		fc.setFileFilter(
-			new FileFilter () { 
+			new FileFilter () {
 				public boolean accept(File f) {
 					String s = f.getName();
 					return f.isDirectory() || (s.endsWith(".zip") || s.endsWith(".ZIP"));
@@ -245,13 +245,13 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 			}
 		}
 	}
-	
+
 	private void reload(JComponent c) {
-   	// rebuild and restart
+		// rebuild and restart
 		PMS.debug("reloading.");
-   	init = true;
-   	((Window)c.getTopLevelAncestor()).dispose();
-		JOptionPane.showOptionDialog((JFrame) (SwingUtilities.getWindowAncestor((Component) PMS.get().getFrame())), 
+		init = true;
+		((Window)c.getTopLevelAncestor()).dispose();
+		JOptionPane.showOptionDialog((JFrame) (SwingUtilities.getWindowAncestor((Component) PMS.get().getFrame())),
 			config(), "Options", JOptionPane.CLOSED_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
 	}
 }
