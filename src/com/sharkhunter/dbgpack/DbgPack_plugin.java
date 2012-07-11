@@ -37,6 +37,8 @@ import net.pms.external.ExternalFactory;
 import net.pms.configuration.PmsConfiguration;
 import net.pms.logging.LoggingConfigFileLoader;
 
+import net.pms.external.dbgpack;
+
 public class DbgPack_plugin implements ExternalListener, ActionListener /*, ItemListener*/ {
 
 	private boolean init;
@@ -113,14 +115,26 @@ public class DbgPack_plugin implements ExternalListener, ActionListener /*, Item
 	private void poll() {
 		// call the client callbacks
 		for(ExternalListener listener:ExternalFactory.getExternalListeners()) {
-			if(listener instanceof dbgpack) {
-				PMS.debug("found client " + listener.name());
-				Object obj = ((dbgpack)listener).dbgpack_cb();
-				if(obj instanceof String) {
-					add(((String)obj).split(","));
-				} else if(obj instanceof String[]) {
-					add((String[])obj);
-				}
+/*
+			// for future use:
+			if(!(listener instanceof dbgpack)) {
+				continue;
+			}
+			Object obj = ((dbgpack)listener).dbgpack_cb();
+*/
+			// for now:
+			// this is clumsier than instanceof but backward-compatible, since interface
+			// can be instanced from either 'com.sharkhunter.dbgpack' or 'net.pms.external'
+			Object obj;
+			try {
+				obj = ((dbgpack)listener).dbgpack_cb();
+			} catch (Exception e) {continue;}
+
+			PMS.debug("found client " + listener.name());
+			if(obj instanceof String) {
+				add(((String)obj).split(","));
+			} else if(obj instanceof String[]) {
+				add((String[])obj);
 			}
 		}
 		PmsConfiguration configuration = PMS.getConfiguration();
