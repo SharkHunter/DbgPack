@@ -1,4 +1,4 @@
-package net.pms.external;
+package com.sharkhunter.dbgpack;
 
 // Examples:
 //
