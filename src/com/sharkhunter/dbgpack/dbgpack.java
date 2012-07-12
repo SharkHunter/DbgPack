@@ -1,3 +1,4 @@
+// backward compatibility - to be removed
 package com.sharkhunter.dbgpack;
 
 // Examples:

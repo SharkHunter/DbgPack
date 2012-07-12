@@ -24,7 +24,7 @@ Files can be added manually to DbgPack by setting `dbgpack` to a comma-separated
 	dbgpack = c:\\path\\to\\mylog,c:\\path\\to\\myconf
 
 ## Developers ##
-The DbgPacker packs the PMS.conf, WEB.conf and the PMS log file (debug.log) plus any files that plugins say should be included. To include new files into the debug packer add [dbgpack.java](https://github.com/SharkHunter/DbgPack/blob/master/src/com/sharkhunter/dbgpack/dbgpack.java) to your project and implement the `dbgpack` interface in your main plugin class:
+The DbgPacker packs the PMS.conf, WEB.conf and the PMS log file (debug.log) plus any files that plugins say should be included. To include new files into the debug packer add [dbgpack.java](https://github.com/SharkHunter/DbgPack/blob/master/src/net/pms/external/dbgpack.java) to your project and implement the `dbgpack` interface in your main plugin class:
 
 	public Object dbgpack_cb() {
 		return mylog;
